@@ -1,0 +1,252 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication and user management
+model User {
+  id        String   @id @default(cuid())
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  email            String   @unique
+  password         String?
+  role             UserRole @default(USER)
+  refreshToken     String?  @db.Text @map("refresh_token")
+  resetToken       String?  @map("reset_token")
+  resetTokenExpires DateTime? @map("reset_token_expires")
+  // OAuth fields
+  googleId         String?  @unique @map("google_id")
+  provider         String?  @default("local")
+  profilePicture   String?  @map("profile_picture")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  reviews          Review[]
+  favorites        Favorite[]
+  validatedPartners Partner[] @relation("PartnerValidator")
+  moderatedReviews Review[]  @relation("ReviewModerator")
+  createdSites     Site[]    @relation("SiteCreator")
+  notifications    Notification[]
+
+  @@map("users")
+}
+
+// Partner model for business partners
+model Partner {
+  id            String        @id @default(cuid())
+  name          String
+  email         String        @unique
+  password      String?
+  refreshToken  String?       @db.Text @map("refresh_token")
+  phone         String?
+  description   String?       @db.Text
+  website       String?
+  address       String?
+  status        PartnerStatus @default(PENDING)
+  validatedBy   String?       @map("validated_by")
+  validatedAt   DateTime?     @map("validated_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  establishments Establishment[]
+  validator      User?         @relation("PartnerValidator", fields: [validatedBy], references: [id])
+
+  @@map("partners")
+}
+
+// Establishment model for hotels, restaurants, etc.
+model Establishment {
+  id            String            @id @default(cuid())
+  name          String
+  description   String?           @db.Text
+  type          EstablishmentType
+  price         Decimal           @db.Decimal(10, 2)
+  images        Json?             // Store array of image URLs as JSON
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  latitude      Decimal?          @db.Decimal(10, 8)
+  longitude     Decimal?          @db.Decimal(11, 8)
+  amenities     Json?             // Store array of amenities as JSON
+  menu          Json?             // Store menu/services as JSON
+  availability  Json?             // Store availability calendar as JSON
+  isActive      Boolean           @default(true) @map("is_active")
+  partnerId     String?           @map("partner_id")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  partner     Partner?     @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  reviews     Review[]
+  promotions  Promotion[]
+  favorites   Favorite[]   @relation("EstablishmentFavorites")
+
+  @@map("establishments")
+}
+
+// Site model for tourist sites
+model Site {
+  id          String     @id @default(cuid())
+  name        String
+  description String?    @db.Text
+  address     String
+  latitude    Decimal    @db.Decimal(10, 8)
+  longitude   Decimal    @db.Decimal(11, 8)
+  images      Json?      // Store array of image URLs as JSON
+  category    SiteCategory
+  openingHours Json?     // Store opening hours as JSON
+  entryFee    Decimal?   @db.Decimal(10, 2)
+  website     String?
+  phone       String?
+  isActive    Boolean    @default(true) @map("is_active")
+  createdBy   String?    @map("created_by")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  creator   User?      @relation("SiteCreator", fields: [createdBy], references: [id])
+  favorites Favorite[] @relation("SiteFavorites")
+
+  @@map("sites")
+}
+
+// Review model for user reviews of establishments
+model Review {
+  id              String      @id @default(cuid())
+  rating          Int         // Rating from 1 to 5
+  comment         String?     @db.Text
+  status          ReviewStatus @default(PENDING)
+  moderatedBy     String?     @map("moderated_by")
+  moderatedAt     DateTime?   @map("moderated_at")
+  moderationNote  String?     @db.Text @map("moderation_note")
+  userId          String      @map("user_id")
+  establishmentId String      @map("establishment_id")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  moderator    User?         @relation("ReviewModerator", fields: [moderatedBy], references: [id])
+
+  @@map("reviews")
+}
+
+// Promotion model for special offers
+model Promotion {
+  id              String    @id @default(cuid())
+  title           String
+  description     String?   @db.Text
+  discount        Decimal   @db.Decimal(5, 2) // Percentage discount
+  validFrom       DateTime  @map("valid_from")
+  validUntil      DateTime  @map("valid_until")
+  isActive        Boolean   @default(true) @map("is_active")
+  establishmentId String    @map("establishment_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@map("promotions")
+}
+
+// Favorite model for user favorites (establishments and sites)
+model Favorite {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  establishmentId String?   @map("establishment_id")
+  siteId          String?   @map("site_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  establishment Establishment? @relation("EstablishmentFavorites", fields: [establishmentId], references: [id], onDelete: Cascade)
+  site          Site?          @relation("SiteFavorites", fields: [siteId], references: [id], onDelete: Cascade)
+
+  // Constraints: A favorite must reference either an establishment OR a site, not both
+  @@unique([userId, establishmentId])
+  @@unique([userId, siteId])
+  @@map("favorites")
+}
+
+// Notification model for inviting users to leave reviews
+model Notification {
+  id              String           @id @default(cuid())
+  userId          String           @map("user_id")
+  type            NotificationType @default(REVIEW_INVITATION)
+  title           String
+  message         String           @db.Text
+  establishmentId String?          @map("establishment_id")
+  isRead          Boolean          @default(false) @map("is_read")
+  readAt          DateTime?        @map("read_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// Enums
+enum UserRole {
+  USER
+  ADMIN
+  PARTNER
+}
+
+enum EstablishmentType {
+  HOTEL
+  RESTAURANT
+  BAR
+  CAFE
+  ATTRACTION
+  SHOP
+  SERVICE
+}
+
+enum PartnerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SiteCategory {
+  MONUMENT
+  MUSEUM
+  PARK
+  BEACH
+  MOUNTAIN
+  CULTURAL
+  RELIGIOUS
+  NATURAL
+  HISTORICAL
+  ENTERTAINMENT
+}
+
+enum NotificationType {
+  REVIEW_INVITATION
+  PROMOTION
+  SYSTEM
+  OTHER
+}
