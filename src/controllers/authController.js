@@ -39,7 +39,7 @@ const authController = {
     // POST /api/auth/register - Inscription d'un nouvel utilisateur
     register: async (req, res) => {
         try {
-            const { firstName, lastName, email, password, role } = req.body;
+            const { firstName, lastName, email, password, country, role } = req.body;
 
             // Vérifier si l'email existe déjà
             const existingUser = await prisma.user.findUnique({
@@ -64,6 +64,7 @@ const authController = {
                     lastName,
                     email,
                     password: hashedPassword,
+                    country: country || null,
                     role: role || 'USER'
                 },
                 select: {
@@ -71,6 +72,7 @@ const authController = {
                     firstName: true,
                     lastName: true,
                     email: true,
+                    country: true,
                     role: true,
                     createdAt: true
                 }
@@ -557,6 +559,7 @@ const authController = {
                     firstName: true,
                     lastName: true,
                     email: true,
+                    country: true,
                     role: true,
                     createdAt: true,
                     updatedAt: true,

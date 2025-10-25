@@ -45,6 +45,14 @@ const validateCreateUser = [
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
         .withMessage('Le mot de passe doit contenir au moins une minuscule, une majuscule, un chiffre et un caractère spécial'),
     
+    body('country')
+        .optional()
+        .trim()
+        .isLength({ min: 2, max: 100 })
+        .withMessage('Le nom du pays doit contenir entre 2 et 100 caractères')
+        .matches(/^[a-zA-ZÀ-ÿ\s-]+$/)
+        .withMessage('Le nom du pays ne peut contenir que des lettres, espaces et tirets'),
+    
     body('role')
         .optional()
         .isIn(['USER', 'ADMIN', 'PARTNER'])
@@ -81,6 +89,14 @@ const validateUpdateUser = [
         .isEmail()
         .withMessage('Email invalide')
         .normalizeEmail(),
+    
+    body('country')
+        .optional()
+        .trim()
+        .isLength({ min: 2, max: 100 })
+        .withMessage('Le nom du pays doit contenir entre 2 et 100 caractères')
+        .matches(/^[a-zA-ZÀ-ÿ\s-]+$/)
+        .withMessage('Le nom du pays ne peut contenir que des lettres, espaces et tirets'),
     
     body('role')
         .optional()
@@ -514,6 +530,14 @@ const validateAdminCreateUser = [
         .withMessage('Le mot de passe doit contenir au moins 8 caractères')
         .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
         .withMessage('Le mot de passe doit contenir au moins une minuscule, une majuscule, un chiffre et un caractère spécial'),
+    
+    body('country')
+        .optional()
+        .trim()
+        .isLength({ min: 2, max: 100 })
+        .withMessage('Le nom du pays doit contenir entre 2 et 100 caractères')
+        .matches(/^[a-zA-ZÀ-ÿ\s-]+$/)
+        .withMessage('Le nom du pays ne peut contenir que des lettres, espaces et tirets'),
     
     body('role')
         .isIn(['USER', 'ADMIN', 'PARTNER'])
