@@ -17,6 +17,7 @@ model User {
   lastName  String   @map("last_name")
   email            String   @unique
   password         String?
+  country          String?  // Pays de l'utilisateur
   role             UserRole @default(USER)
   refreshToken     String?  @db.Text @map("refresh_token")
   resetToken       String?  @map("reset_token")

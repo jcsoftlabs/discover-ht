@@ -12,6 +12,7 @@ const usersController = {
                     firstName: true,
                     lastName: true,
                     email: true,
+                    country: true,
                     role: true,
                     createdAt: true,
                     // Exclure le mot de passe pour la sécurité
@@ -51,6 +52,7 @@ const usersController = {
                     firstName: true,
                     lastName: true,
                     email: true,
+                    country: true,
                     role: true,
                     createdAt: true,
                     reviews: {
@@ -93,13 +95,21 @@ const usersController = {
     // POST /api/users - Créer un nouvel utilisateur
     createUser: async (req, res) => {
         try {
-            const { firstName, lastName, email, password, role } = req.body;
+            const { firstName, lastName, email, password, country, role } = req.body;
 
             // Validation des données
             if (!firstName || !lastName || !email || !password) {
                 return res.status(400).json({
                     success: false,
                     error: 'Prénom, nom, email et mot de passe sont obligatoires'
+                });
+            }
+
+            // Validation du pays pour les utilisateurs normaux
+            if ((!role || role === 'USER') && !country) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Le pays est obligatoire pour l\'inscription'
                 });
             }
 
@@ -134,6 +144,7 @@ const usersController = {
                     lastName,
                     email,
                     password: hashedPassword,
+                    country: country || null,
                     role: role || 'USER'
                 },
                 select: {
@@ -141,6 +152,7 @@ const usersController = {
                     firstName: true,
                     lastName: true,
                     email: true,
+                    country: true,
                     role: true,
                     createdAt: true
                 }
@@ -184,7 +196,7 @@ const usersController = {
     updateUser: async (req, res) => {
         try {
             const { id } = req.params;
-            const { firstName, lastName, email, role } = req.body;
+            const { firstName, lastName, email, country, role } = req.body;
 
             // Vérifier si l'utilisateur existe
             const existingUser = await prisma.user.findUnique({
@@ -227,6 +239,7 @@ const usersController = {
                     firstName: firstName || existingUser.firstName,
                     lastName: lastName || existingUser.lastName,
                     email: email || existingUser.email,
+                    country: country !== undefined ? country : existingUser.country,
                     role: role || existingUser.role
                 },
                 select: {
@@ -234,6 +247,7 @@ const usersController = {
                     firstName: true,
                     lastName: true,
                     email: true,
+                    country: true,
                     role: true,
                     createdAt: true,
                     updatedAt: true
@@ -307,6 +321,7 @@ const usersController = {
                     firstName: true,
                     lastName: true,
                     email: true,
+                    country: true,
                     role: true,
                     createdAt: true,
                     _count: {
