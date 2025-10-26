@@ -117,3 +117,6 @@ dist
 ehthumbs.db
 Thumbs.db
 /src/generated/prisma
+
+# Uploaded files
+public/uploads/
