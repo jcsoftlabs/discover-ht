@@ -73,7 +73,7 @@ const sitesController = {
     // POST /api/sites - Créer un nouveau site
     createSite: async (req, res) => {
         try {
-            const { name, description, address, latitude, longitude, images } = req.body;
+            const { name, description, address, ville, departement, latitude, longitude, images } = req.body;
 
             // Validation des données obligatoires
             if (!name || !address || !latitude || !longitude) {
@@ -111,6 +111,8 @@ const sitesController = {
                     name,
                     description,
                     address,
+                    ville,
+                    departement,
                     latitude: lat,
                     longitude: lng,
                     images: imageUrls.length > 0 ? imageUrls : null
@@ -135,7 +137,7 @@ const sitesController = {
     updateSite: async (req, res) => {
         try {
             const { id } = req.params;
-            const { name, description, address, latitude, longitude, images } = req.body;
+            const { name, description, address, ville, departement, latitude, longitude, images } = req.body;
 
             // Vérifier si le site existe
             const existingSite = await prisma.site.findUnique({
@@ -191,6 +193,8 @@ const sitesController = {
                     name: name || existingSite.name,
                     description: description !== undefined ? description : existingSite.description,
                     address: address || existingSite.address,
+                    ville: ville !== undefined ? ville : existingSite.ville,
+                    departement: departement !== undefined ? departement : existingSite.departement,
                     latitude: lat !== undefined ? lat : existingSite.latitude,
                     longitude: lng !== undefined ? lng : existingSite.longitude,
                     images: imageUrls.length > 0 ? imageUrls : null

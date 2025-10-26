@@ -120,6 +120,8 @@ const establishmentsController = {
                 price,
                 images,
                 address,
+                ville,
+                departement,
                 latitude,
                 longitude,
                 partnerId
@@ -168,6 +170,8 @@ const establishmentsController = {
                     price: parseFloat(price),
                     images: imageUrls.length > 0 ? imageUrls : null,
                     address,
+                    ville,
+                    departement,
                     latitude: latitude ? parseFloat(latitude) : null,
                     longitude: longitude ? parseFloat(longitude) : null,
                     partnerId
@@ -208,6 +212,8 @@ const establishmentsController = {
                 price,
                 images,
                 address,
+                ville,
+                departement,
                 latitude,
                 longitude
             } = req.body;
@@ -248,6 +254,8 @@ const establishmentsController = {
                     price: price ? parseFloat(price) : existingEstablishment.price,
                     images: imageUrls.length > 0 ? imageUrls : null,
                     address: address !== undefined ? address : existingEstablishment.address,
+                    ville: ville !== undefined ? ville : existingEstablishment.ville,
+                    departement: departement !== undefined ? departement : existingEstablishment.departement,
                     latitude: latitude !== undefined ? (latitude ? parseFloat(latitude) : null) : existingEstablishment.latitude,
                     longitude: longitude !== undefined ? (longitude ? parseFloat(longitude) : null) : existingEstablishment.longitude
                 },
