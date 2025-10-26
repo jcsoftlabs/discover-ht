@@ -73,6 +73,8 @@ model Establishment {
   price         Decimal           @db.Decimal(10, 2)
   images        Json?             // Store array of image URLs as JSON
   address       String?
+  ville         String?           // City
+  departement   String?           // Department
   phone         String?
   email         String?
   website       String?
@@ -101,6 +103,8 @@ model Site {
   name        String
   description String?    @db.Text
   address     String
+  ville       String?    // City
+  departement String?    // Department
   latitude    Decimal    @db.Decimal(10, 8)
   longitude   Decimal    @db.Decimal(11, 8)
   images      Json?      // Store array of image URLs as JSON

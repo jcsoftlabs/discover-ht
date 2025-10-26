@@ -464,7 +464,7 @@ const validateAdminUpdateUserRole = [
 // Validation pour mise à jour du statut partenaire
 const validateAdminUpdatePartnerStatus = [
     param('partnerId')
-        .matches(/^[a-zA-Z0-9]{25}$/)
+        .matches(/^[a-zA-Z0-9_-]{3,50}$/)  // Plus flexible pour dev: 3-50 caractères alpanumériques
         .withMessage('ID partenaire invalide'),
     
     body('status')
