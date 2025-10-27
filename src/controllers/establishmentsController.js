@@ -356,9 +356,10 @@ const establishmentsController = {
                     }
 
                     // Vérifier que le partenaire existe si un partnerId est fourni
-                    if (row.partnerid) {
+                    let validPartnerId = null;
+                    if (row.partnerid && row.partnerid.trim() !== '') {
                         const partner = await prisma.partner.findUnique({
-                            where: { id: row.partnerid }
+                            where: { id: row.partnerid.trim() }
                         });
 
                         if (!partner) {
@@ -369,6 +370,7 @@ const establishmentsController = {
                             });
                             continue;
                         }
+                        validPartnerId = row.partnerid.trim();
                     }
 
                     // Traiter les images (si fournies comme URLs séparées par des virgules)
@@ -390,7 +392,7 @@ const establishmentsController = {
                             departement: row.departement ? row.departement.trim() : null,
                             latitude: row.latitude ? parseFloat(row.latitude) : null,
                             longitude: row.longitude ? parseFloat(row.longitude) : null,
-                            partnerId: row.partnerid || null
+                            partnerId: validPartnerId
                         }
                     });
 

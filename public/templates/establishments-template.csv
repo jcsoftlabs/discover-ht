@@ -1,4 +1,4 @@
 name,description,type,price,images,address,ville,departement,latitude,longitude,partnerId
-Hotel Luxe Paris,Un hôtel 5 étoiles au cœur de Paris,hotel,250.00,https://example.com/img1.jpg|https://example.com/img2.jpg,123 Rue de Rivoli,Paris,Paris,48.8566,2.3522,
-Restaurant Le Gourmet,Restaurant gastronomique avec vue sur la Seine,restaurant,75.50,,45 Quai de la Seine,Paris,Paris,48.8584,2.3488,
-Musée d'Art Moderne,Découvrez l'art contemporain,museum,15.00,https://example.com/museum.jpg,11 Avenue du Président Wilson,Paris,Paris,48.8648,2.2970,
+Hotel Luxe Paris,Un hôtel 5 étoiles au cœur de Paris,HOTEL,250.00,https://example.com/img1.jpg|https://example.com/img2.jpg,123 Rue de Rivoli,Paris,Paris,48.8566,2.3522,
+Restaurant Le Gourmet,Restaurant gastronomique avec vue sur la Seine,RESTAURANT,75.50,,45 Quai de la Seine,Paris,Paris,48.8584,2.3488,
+Musée d'Art Moderne,Découvrez l'art contemporain,ATTRACTION,15.00,https://example.com/museum.jpg,11 Avenue du Président Wilson,Paris,Paris,48.8648,2.2970,
