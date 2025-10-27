@@ -89,4 +89,10 @@ router.post('/google', oauthController.googleLogin);
 // POST /api/auth/unlink-google - Dissocier le compte Google (authentification requise)
 router.post('/unlink-google', authenticateToken, oauthController.unlinkGoogle);
 
+// POST /api/auth/facebook - Authentification avec Facebook
+router.post('/facebook', oauthController.facebookLogin);
+
+// POST /api/auth/unlink-facebook - Dissocier le compte Facebook (authentification requise)
+router.post('/unlink-facebook', authenticateToken, oauthController.unlinkFacebook);
+
 module.exports = router;

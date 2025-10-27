@@ -1,5 +1,6 @@
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 const { prisma } = require('../config/database');
 
 // Client IDs Google supportés (Web + iOS)
@@ -228,7 +229,216 @@ const unlinkGoogle = async (req, res) => {
     }
 };
 
+/**
+ * Authentifier avec Facebook
+ */
+const facebookLogin = async (req, res) => {
+    try {
+        const { accessToken, facebookId, email, firstName, lastName, profilePicture } = req.body;
+
+        if (!accessToken || !facebookId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Token Facebook et ID requis'
+            });
+        }
+
+        // Vérifier le token avec Facebook Graph API
+        try {
+            const response = await axios.get(
+                `https://graph.facebook.com/me?access_token=${accessToken}&fields=id,email,name`
+            );
+            
+            // Vérifier que l'ID correspond
+            if (response.data.id !== facebookId) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Token Facebook invalide'
+                });
+            }
+        } catch (error) {
+            return res.status(401).json({
+                success: false,
+                error: 'Token Facebook invalide ou expiré'
+            });
+        }
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email requis pour l\'authentification'
+            });
+        }
+
+        // Chercher l'utilisateur par facebookId ou email
+        let user = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { facebookId: facebookId },
+                    { email: email }
+                ]
+            },
+            select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                role: true,
+                facebookId: true,
+                provider: true,
+                profilePicture: true,
+                createdAt: true
+            }
+        });
+
+        let isNewUser = false;
+
+        if (!user) {
+            // Créer un nouvel utilisateur
+            user = await prisma.user.create({
+                data: {
+                    facebookId: facebookId,
+                    email: email,
+                    firstName: firstName || '',
+                    lastName: lastName || '',
+                    profilePicture: profilePicture || null,
+                    provider: 'facebook',
+                    password: null, // Pas de mot de passe pour OAuth
+                    role: 'USER'
+                },
+                select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    role: true,
+                    facebookId: true,
+                    provider: true,
+                    profilePicture: true,
+                    createdAt: true
+                }
+            });
+            isNewUser = true;
+        } else if (!user.facebookId) {
+            // Lier le compte existant avec Facebook
+            user = await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    facebookId: facebookId,
+                    provider: 'facebook',
+                    profilePicture: profilePicture || user.profilePicture
+                },
+                select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    role: true,
+                    facebookId: true,
+                    provider: true,
+                    profilePicture: true,
+                    createdAt: true
+                }
+            });
+        }
+
+        // Générer un JWT pour notre application
+        const jwtToken = jwt.sign(
+            {
+                userId: user.id,
+                email: user.email,
+                role: user.role
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        // Retourner les informations de l'utilisateur et le token
+        res.json({
+            success: true,
+            message: isNewUser ? 'Compte créé avec succès' : 'Connexion réussie',
+            isNewUser: isNewUser,
+            token: jwtToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                role: user.role,
+                profilePicture: user.profilePicture,
+                provider: user.provider,
+                createdAt: user.createdAt
+            }
+        });
+
+    } catch (error) {
+        console.error('Erreur lors de l\'authentification Facebook:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erreur lors de l\'authentification Facebook',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+/**
+ * Dissocier le compte Facebook de l'utilisateur
+ */
+const unlinkFacebook = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Vérifier si l'utilisateur a un mot de passe
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                password: true,
+                facebookId: true,
+                provider: true
+            }
+        });
+
+        if (!user.facebookId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Aucun compte Facebook lié'
+            });
+        }
+
+        // Si l'utilisateur n'a pas de mot de passe, il ne peut pas dissocier Facebook
+        if (!user.password) {
+            return res.status(400).json({
+                success: false,
+                error: 'Vous devez d\'abord définir un mot de passe avant de dissocier votre compte Facebook'
+            });
+        }
+
+        // Dissocier le compte Facebook
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                facebookId: null,
+                provider: 'local'
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Compte Facebook dissocié avec succès'
+        });
+
+    } catch (error) {
+        console.error('Erreur lors de la dissociation du compte Facebook:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erreur lors de la dissociation du compte Facebook'
+        });
+    }
+};
+
 module.exports = {
     googleLogin,
-    unlinkGoogle
+    unlinkGoogle,
+    facebookLogin,
+    unlinkFacebook
 };
