@@ -49,6 +49,18 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
+// Filtrer les fichiers CSV
+const csvFileFilter = (req, file, cb) => {
+    const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 'text/plain'];
+    const isCSV = allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.csv');
+    
+    if (isCSV) {
+        cb(null, true);
+    } else {
+        cb(new Error('Type de fichier non autorisé. Seuls les fichiers CSV sont acceptés.'), false);
+    }
+};
+
 // Configuration de multer pour les établissements
 const establishmentUpload = multer({
     storage: establishmentStorage,
@@ -67,6 +79,32 @@ const siteUpload = multer({
     fileFilter: fileFilter
 });
 
+// Configuration du stockage pour les fichiers CSV
+const csvStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadPath = path.join(__dirname, '../../temp/csv');
+        // S'assurer que le dossier existe
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+        // Générer un nom de fichier unique
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'import-' + uniqueSuffix + '.csv');
+    }
+});
+
+// Configuration de multer pour les fichiers CSV
+const csvUpload = multer({
+    storage: csvStorage,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // Limite de 10 MB pour les CSV
+    },
+    fileFilter: csvFileFilter
+});
+
 // Middleware pour upload d'une seule image (établissement)
 const uploadSingle = establishmentUpload.single('image');
 
@@ -75,6 +113,9 @@ const uploadMultiple = establishmentUpload.array('images', 10);
 
 // Middleware pour upload de plusieurs images (sites, max 10)
 const uploadMultipleSites = siteUpload.array('images', 10);
+
+// Middleware pour upload de fichiers CSV
+const uploadCSV = csvUpload.single('csvFile');
 
 // Middleware de gestion d'erreurs pour multer
 const handleUploadError = (err, req, res, next) => {
@@ -108,5 +149,6 @@ module.exports = {
     uploadSingle,
     uploadMultiple,
     uploadMultipleSites,
+    uploadCSV,
     handleUploadError
 };

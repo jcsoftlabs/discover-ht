@@ -3,7 +3,7 @@ const router = express.Router();
 const sitesController = require('../controllers/sitesController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { validateId } = require('../middleware/validation');
-const { uploadMultipleSites, handleUploadError } = require('../middleware/upload');
+const { uploadMultipleSites, uploadCSV, handleUploadError } = require('../middleware/upload');
 
 // Routes pour les sites touristiques
 
@@ -40,5 +40,14 @@ router.put('/:id',
 
 // DELETE /api/sites/:id - Supprimer un site (ADMIN seulement)
 router.delete('/:id', authenticateToken, requireRole(['ADMIN']), validateId, sitesController.deleteSite);
+
+// POST /api/sites/import-csv - Importer des sites depuis un CSV (ADMIN seulement)
+router.post('/import-csv', 
+    authenticateToken, 
+    requireRole(['ADMIN']), 
+    uploadCSV, 
+    handleUploadError,
+    sitesController.importFromCSV
+);
 
 module.exports = router;

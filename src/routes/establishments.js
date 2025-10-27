@@ -3,7 +3,7 @@ const router = express.Router();
 const establishmentsController = require('../controllers/establishmentsController');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { validateCreateEstablishment, validateId } = require('../middleware/validation');
-const { uploadMultiple, handleUploadError } = require('../middleware/upload');
+const { uploadMultiple, uploadCSV, handleUploadError } = require('../middleware/upload');
 
 // Routes pour les établissements
 
@@ -35,5 +35,14 @@ router.put('/:id',
 
 // DELETE /api/establishments/:id - Supprimer un établissement (ADMIN seulement)
 router.delete('/:id', authenticateToken, requireRole(['ADMIN']), validateId, establishmentsController.deleteEstablishment);
+
+// POST /api/establishments/import-csv - Importer des établissements depuis un CSV (PARTNER ou ADMIN)
+router.post('/import-csv', 
+    authenticateToken, 
+    requireRole(['PARTNER', 'ADMIN']), 
+    uploadCSV, 
+    handleUploadError,
+    establishmentsController.importFromCSV
+);
 
 module.exports = router;

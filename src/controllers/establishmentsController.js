@@ -1,4 +1,7 @@
 const { prisma } = require('../config/database');
+const csv = require('csv-parser');
+const fs = require('fs');
+const path = require('path');
 
 // Contrôleur pour les établissements avec Prisma
 const establishmentsController = {
@@ -313,6 +316,131 @@ const establishmentsController = {
             res.status(500).json({
                 success: false,
                 error: 'Erreur lors de la suppression de l\'établissement'
+            });
+        }
+    },
+
+    // POST /api/establishments/import-csv - Importer des établissements depuis un fichier CSV
+    importFromCSV: async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Aucun fichier CSV fourni'
+                });
+            }
+
+            const filePath = req.file.path;
+            const results = [];
+            const errors = [];
+            let lineNumber = 1;
+
+            // Lire et parser le fichier CSV
+            const stream = fs.createReadStream(filePath)
+                .pipe(csv({
+                    separator: ',',
+                    mapHeaders: ({ header }) => header.trim().toLowerCase()
+                }));
+
+            for await (const row of stream) {
+                lineNumber++;
+                try {
+                    // Validation des champs obligatoires
+                    if (!row.name || !row.type || !row.price) {
+                        errors.push({
+                            line: lineNumber,
+                            error: 'Champs obligatoires manquants (name, type, price)',
+                            data: row
+                        });
+                        continue;
+                    }
+
+                    // Vérifier que le partenaire existe si un partnerId est fourni
+                    if (row.partnerid) {
+                        const partner = await prisma.partner.findUnique({
+                            where: { id: row.partnerid }
+                        });
+
+                        if (!partner) {
+                            errors.push({
+                                line: lineNumber,
+                                error: `Partenaire non trouvé: ${row.partnerid}`,
+                                data: row
+                            });
+                            continue;
+                        }
+                    }
+
+                    // Traiter les images (si fournies comme URLs séparées par des virgules)
+                    let imageUrls = null;
+                    if (row.images) {
+                        imageUrls = row.images.split('|').map(url => url.trim()).filter(url => url);
+                    }
+
+                    // Créer l'établissement
+                    const establishment = await prisma.establishment.create({
+                        data: {
+                            name: row.name.trim(),
+                            description: row.description ? row.description.trim() : null,
+                            type: row.type.trim(),
+                            price: parseFloat(row.price),
+                            images: imageUrls,
+                            address: row.address ? row.address.trim() : null,
+                            ville: row.ville ? row.ville.trim() : null,
+                            departement: row.departement ? row.departement.trim() : null,
+                            latitude: row.latitude ? parseFloat(row.latitude) : null,
+                            longitude: row.longitude ? parseFloat(row.longitude) : null,
+                            partnerId: row.partnerid || null
+                        }
+                    });
+
+                    results.push({
+                        line: lineNumber,
+                        success: true,
+                        id: establishment.id,
+                        name: establishment.name
+                    });
+                } catch (error) {
+                    errors.push({
+                        line: lineNumber,
+                        error: error.message,
+                        data: row
+                    });
+                }
+            }
+
+            // Supprimer le fichier CSV temporaire
+            fs.unlinkSync(filePath);
+
+            res.status(201).json({
+                success: true,
+                message: `Import terminé: ${results.length} établissements créés, ${errors.length} erreurs`,
+                data: {
+                    created: results,
+                    errors: errors,
+                    summary: {
+                        total: lineNumber - 1,
+                        success: results.length,
+                        failed: errors.length
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Erreur lors de l\'import CSV:', error);
+            
+            // Nettoyer le fichier temporaire en cas d'erreur
+            if (req.file && req.file.path) {
+                try {
+                    fs.unlinkSync(req.file.path);
+                } catch (cleanupError) {
+                    console.error('Erreur lors de la suppression du fichier temporaire:', cleanupError);
+                }
+            }
+
+            res.status(500).json({
+                success: false,
+                error: 'Erreur lors de l\'import CSV',
+                details: error.message
             });
         }
     }

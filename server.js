@@ -43,7 +43,7 @@ const limiter = rateLimit({
 // Rate limiting spécial pour l'authentification
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // Limite de 5 tentatives de connexion par IP toutes les 15 minutes
+    max: 50, // Limite de 50 tentatives de connexion par IP toutes les 15 minutes
     message: {
         success: false,
         error: 'Trop de tentatives de connexion, réessayez dans 15 minutes.'

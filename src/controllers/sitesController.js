@@ -1,4 +1,7 @@
 const { prisma } = require('../config/database');
+const csv = require('csv-parser');
+const fs = require('fs');
+const path = require('path');
 
 // Contrôleur pour la gestion des sites touristiques
 const sitesController = {
@@ -332,6 +335,125 @@ const sitesController = {
             res.status(500).json({
                 success: false,
                 error: 'Erreur lors de la récupération des statistiques'
+            });
+        }
+    },
+
+    // POST /api/sites/import-csv - Importer des sites depuis un fichier CSV
+    importFromCSV: async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Aucun fichier CSV fourni'
+                });
+            }
+
+            const filePath = req.file.path;
+            const results = [];
+            const errors = [];
+            let lineNumber = 1;
+
+            // Lire et parser le fichier CSV
+            const stream = fs.createReadStream(filePath)
+                .pipe(csv({
+                    separator: ',',
+                    mapHeaders: ({ header }) => header.trim().toLowerCase()
+                }));
+
+            for await (const row of stream) {
+                lineNumber++;
+                try {
+                    // Validation des champs obligatoires
+                    if (!row.name || !row.address || !row.latitude || !row.longitude) {
+                        errors.push({
+                            line: lineNumber,
+                            error: 'Champs obligatoires manquants (name, address, latitude, longitude)',
+                            data: row
+                        });
+                        continue;
+                    }
+
+                    // Validation des coordonnées GPS
+                    const lat = parseFloat(row.latitude);
+                    const lng = parseFloat(row.longitude);
+                    
+                    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                        errors.push({
+                            line: lineNumber,
+                            error: 'Coordonnées GPS invalides',
+                            data: row
+                        });
+                        continue;
+                    }
+
+                    // Traiter les images (si fournies comme URLs séparées par des pipes)
+                    let imageUrls = null;
+                    if (row.images) {
+                        imageUrls = row.images.split('|').map(url => url.trim()).filter(url => url);
+                    }
+
+                    // Créer le site
+                    const site = await prisma.site.create({
+                        data: {
+                            name: row.name.trim(),
+                            description: row.description ? row.description.trim() : null,
+                            address: row.address.trim(),
+                            ville: row.ville ? row.ville.trim() : null,
+                            departement: row.departement ? row.departement.trim() : null,
+                            latitude: lat,
+                            longitude: lng,
+                            images: imageUrls
+                        }
+                    });
+
+                    results.push({
+                        line: lineNumber,
+                        success: true,
+                        id: site.id,
+                        name: site.name
+                    });
+                } catch (error) {
+                    errors.push({
+                        line: lineNumber,
+                        error: error.message,
+                        data: row
+                    });
+                }
+            }
+
+            // Supprimer le fichier CSV temporaire
+            fs.unlinkSync(filePath);
+
+            res.status(201).json({
+                success: true,
+                message: `Import terminé: ${results.length} sites créés, ${errors.length} erreurs`,
+                data: {
+                    created: results,
+                    errors: errors,
+                    summary: {
+                        total: lineNumber - 1,
+                        success: results.length,
+                        failed: errors.length
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Erreur lors de l\'import CSV:', error);
+            
+            // Nettoyer le fichier temporaire en cas d'erreur
+            if (req.file && req.file.path) {
+                try {
+                    fs.unlinkSync(req.file.path);
+                } catch (cleanupError) {
+                    console.error('Erreur lors de la suppression du fichier temporaire:', cleanupError);
+                }
+            }
+
+            res.status(500).json({
+                success: false,
+                error: 'Erreur lors de l\'import CSV',
+                details: error.message
             });
         }
     }

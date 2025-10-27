@@ -1,0 +1,4 @@
+name,description,address,ville,departement,latitude,longitude,images
+Tour Eiffel,Monument emblématique de Paris,Champ de Mars,Paris,Paris,48.8584,2.2945,https://example.com/eiffel.jpg
+Sacré-Cœur,Basilique située au sommet de Montmartre,35 Rue du Chevalier de la Barre,Paris,Paris,48.8867,2.3431,https://example.com/sacre-coeur.jpg|https://example.com/sacre-coeur2.jpg
+Arc de Triomphe,Monument historique sur la Place de l'Étoile,Place Charles de Gaulle,Paris,Paris,48.8738,2.2950,
