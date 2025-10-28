@@ -214,6 +214,7 @@ const establishmentsController = {
                 type,
                 price,
                 images,
+                imagesToDelete,
                 address,
                 ville,
                 departement,
@@ -236,6 +237,40 @@ const establishmentsController = {
             // Gérer les images uploadées
             let imageUrls = existingEstablishment.images || [];
             const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+            
+            // Parser imagesToDelete si c'est une string JSON
+            let imagesToDeleteArray = [];
+            if (imagesToDelete) {
+                try {
+                    imagesToDeleteArray = typeof imagesToDelete === 'string' 
+                        ? JSON.parse(imagesToDelete) 
+                        : imagesToDelete;
+                } catch (e) {
+                    console.error('Erreur parsing imagesToDelete:', e);
+                }
+            }
+            
+            // Supprimer les images spécifiées
+            if (imagesToDeleteArray && Array.isArray(imagesToDeleteArray) && imagesToDeleteArray.length > 0) {
+                imagesToDeleteArray.forEach(imageUrl => {
+                    // Extraire le nom du fichier depuis l'URL
+                    const filename = imageUrl.split('/').pop();
+                    const filePath = path.join(__dirname, '../../uploads/establishments', filename);
+                    
+                    // Supprimer le fichier du serveur
+                    if (fs.existsSync(filePath)) {
+                        try {
+                            fs.unlinkSync(filePath);
+                            console.log(`Image supprimée: ${filename}`);
+                        } catch (error) {
+                            console.error(`Erreur lors de la suppression de l'image ${filename}:`, error);
+                        }
+                    }
+                    
+                    // Retirer l'URL de la liste
+                    imageUrls = imageUrls.filter(url => url !== imageUrl);
+                });
+            }
             
             // Si de nouveaux fichiers ont été uploadés
             if (req.files && req.files.length > 0) {
