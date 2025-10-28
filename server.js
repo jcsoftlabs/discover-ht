@@ -115,9 +115,29 @@ app.use('/uploads', (req, res, next) => {
     next();
 }, express.static('public/uploads'));
 
+// Middleware de détection client (web/mobile)
+app.use((req, res, next) => {
+    const userAgent = req.headers['user-agent'] || '';
+    const clientType = req.headers['x-client-type']; // Header personnalisé depuis l'app
+    
+    // Détection du type de client
+    const isMobile = clientType === 'mobile' || /mobile|android|ios|flutter|dart/i.test(userAgent);
+    const isWeb = clientType === 'web' || !isMobile;
+    
+    req.clientInfo = {
+        isMobile,
+        isWeb,
+        type: clientType || (isMobile ? 'mobile' : 'web'),
+        userAgent: userAgent.substring(0, 100) // Tronquer pour logging
+    };
+    
+    next();
+});
+
 // Middleware de logging
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    const clientTag = req.clientInfo.isMobile ? '📱' : '🖥️ ';
+    console.log(`${new Date().toISOString()} ${clientTag} [${req.clientInfo.type}] - ${req.method} ${req.path}`);
     next();
 });
 

@@ -2,6 +2,7 @@ const { prisma } = require('../config/database');
 const csv = require('csv-parser');
 const fs = require('fs');
 const path = require('path');
+const { isMobileRequest, formatImagesForClient } = require('../middleware/clientDetection');
 
 // Contrôleur pour les établissements avec Prisma
 const establishmentsController = {
@@ -49,11 +50,36 @@ const establishmentsController = {
                 }
             });
 
-            res.json({
+            // Adapter la réponse selon le type de client
+            const isMobile = isMobileRequest(req);
+            const responseData = isMobile ? {
+                // Mobile : données optimisées (sans certains champs volumineux)
+                success: true,
+                data: establishments.map(est => ({
+                    id: est.id,
+                    name: est.name,
+                    type: est.type,
+                    price: est.price,
+                    images: est.images ? est.images.slice(0, 2) : null, // Max 2 images pour mobile
+                    address: est.address,
+                    ville: est.ville,
+                    latitude: est.latitude,
+                    longitude: est.longitude,
+                    rating: est.rating,
+                    reviewCount: est._count?.reviews || 0,
+                    hasPromotion: (est.promotions?.length || 0) > 0
+                })),
+                count: establishments.length,
+                client: 'mobile'
+            } : {
+                // Web : données complètes
                 success: true,
                 data: establishments,
-                count: establishments.length
-            });
+                count: establishments.length,
+                client: 'web'
+            };
+            
+            res.json(responseData);
         } catch (error) {
             console.error('Erreur lors de la récupération des établissements:', error);
             res.status(500).json({
@@ -100,9 +126,15 @@ const establishmentsController = {
                 });
             }
 
+            // Adapter les images selon le client
+            if (establishment.images && req.clientInfo) {
+                establishment.images = formatImagesForClient(req, establishment.images);
+            }
+            
             res.json({
                 success: true,
-                data: establishment
+                data: establishment,
+                client: req.clientInfo?.type || 'unknown'
             });
         } catch (error) {
             console.error('Erreur lors de la récupération de l\'établissement:', error);
