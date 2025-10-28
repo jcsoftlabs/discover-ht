@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS establishments (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     type ENUM('HOTEL', 'RESTAURANT', 'BAR', 'CAFE', 'ATTRACTION', 'SHOP', 'SERVICE') NOT NULL,
-    price DECIMAL(10, 2) NOT NULL,
+    price DECIMAL(10, 2),
     images JSON,
     address VARCHAR(255),
     ville VARCHAR(255),

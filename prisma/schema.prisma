@@ -71,7 +71,7 @@ model Establishment {
   name          String
   description   String?           @db.Text
   type          EstablishmentType
-  price         Decimal           @db.Decimal(10, 2)
+  price         Decimal?          @db.Decimal(10, 2)
   images        Json?             // Store array of image URLs as JSON
   address       String?
   ville         String?           // City
