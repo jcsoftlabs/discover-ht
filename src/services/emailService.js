@@ -275,7 +275,7 @@ const getWelcomeEmailTemplate = (firstName, userEmail) => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Bienvenue sur Tourism Platform</title>
+        <title>Bienvenue sur Discover Haiti</title>
         <style>
             body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
@@ -380,7 +380,7 @@ const getWelcomeEmailTemplate = (firstName, userEmail) => {
     <body>
         <div class="container">
             <div class="header">
-                <h1>🎉 Bienvenue sur Tourism Platform !</h1>
+                <h1>🎉 Bienvenue sur Discover Haiti !</h1>
             </div>
             
             <div class="content">
