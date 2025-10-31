@@ -17,7 +17,14 @@ const initEmailService = () => {
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS
-        }
+        },
+        tls: {
+            rejectUnauthorized: false, // Accepter les certificats auto-signés
+            minVersion: 'TLSv1.2' // Version minimale de TLS
+        },
+        connectionTimeout: 10000, // 10 secondes
+        greetingTimeout: 10000,
+        socketTimeout: 20000
     };
 
     // Pour le développement, utiliser Ethereal Email (service de test)
@@ -30,6 +37,18 @@ const initEmailService = () => {
     try {
         transporter = nodemailer.createTransport(emailConfig);
         console.log('📧 Service email initialisé avec succès');
+        console.log('   Host:', emailConfig.host);
+        console.log('   Port:', emailConfig.port);
+        console.log('   Secure:', emailConfig.secure);
+        
+        // Vérifier la connexion (async, ne bloque pas le démarrage)
+        transporter.verify().then(() => {
+            console.log('✅ Connexion SMTP vérifiée et fonctionnelle');
+        }).catch((error) => {
+            console.error('⚠️ Erreur de vérification SMTP:', error.message);
+            console.error('   Les emails pourraient ne pas être envoyés correctement');
+        });
+        
         return transporter;
     } catch (error) {
         console.error('❌ Erreur lors de l\'initialisation du service email:', error);
