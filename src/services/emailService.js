@@ -198,7 +198,7 @@ const getPasswordResetTemplate = (firstName, resetLink, expiresIn = 30) => {
                 <p>
                     Cet email a été envoyé automatiquement, merci de ne pas y répondre.
                     <br>
-                    Pour toute question, contactez-nous à <a href="mailto:support@touris-app.com">support@touris-app.com</a>
+                    Pour toute question, contactez-nous à <a href="mailto:support@discoverhaiti.ht">support@discoverhaiti.ht</a>
                 </p>
                 <p style="margin-top: 20px; font-size: 12px; color: #999;">
                     © 2025 Tourism Platform - Tous droits réservés
@@ -422,10 +422,10 @@ const getWelcomeEmailTemplate = (firstName, userEmail) => {
                 <p>
                     Cet email a été envoyé automatiquement suite à votre inscription.
                     <br>
-                    Pour toute question, contactez-nous à <a href="mailto:support@touris-app.com">support@touris-app.com</a>
+                    Pour toute question, contactez-nous à <a href="mailto:support@discoverhaiti.ht">support@discoverhaiti.ht</a>
                 </p>
                 <p style="margin-top: 20px; font-size: 12px; color: #999;">
-                    © 2025 Tourism Platform - Tous droits réservés
+                    © 2025 Ministere du Tourisme - Tous droits réservés
                 </p>
             </div>
         </div>
