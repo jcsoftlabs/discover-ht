@@ -1,42 +1,10 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { establishmentStorage, siteStorage } = require('../config/cloudinary');
 
-// Configuration du stockage pour les images d'établissements
-const establishmentStorage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../../public/uploads/establishments');
-        // S'assurer que le dossier existe
-        if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath, { recursive: true });
-        }
-        cb(null, uploadPath);
-    },
-    filename: (req, file, cb) => {
-        // Générer un nom de fichier unique
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        cb(null, 'establishment-' + uniqueSuffix + ext);
-    }
-});
-
-// Configuration du stockage pour les images de sites
-const siteStorage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../../public/uploads/sites');
-        // S'assurer que le dossier existe
-        if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath, { recursive: true });
-        }
-        cb(null, uploadPath);
-    },
-    filename: (req, file, cb) => {
-        // Générer un nom de fichier unique
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        cb(null, 'site-' + uniqueSuffix + ext);
-    }
-});
+// Le stockage est maintenant géré par Cloudinary
+// Les configurations establishmentStorage et siteStorage sont importées depuis cloudinary.js
 
 // Filtrer les types de fichiers acceptés
 const fileFilter = (req, file, cb) => {

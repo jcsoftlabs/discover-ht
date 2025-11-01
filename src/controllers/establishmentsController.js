@@ -186,11 +186,11 @@ const establishmentsController = {
 
             // Gérer les images uploadées
             let imageUrls = [];
-            const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
             
-            // Si des fichiers ont été uploadés via multer
+            // Si des fichiers ont été uploadés via multer (Cloudinary)
             if (req.files && req.files.length > 0) {
-                imageUrls = req.files.map(file => `${baseUrl}/uploads/establishments/${file.filename}`);
+                // Cloudinary retourne directement les URLs dans file.path
+                imageUrls = req.files.map(file => file.path);
             }
             // Si des URLs d'images sont fournies dans le body
             else if (images) {
@@ -268,7 +268,7 @@ const establishmentsController = {
 
             // Gérer les images uploadées
             let imageUrls = existingEstablishment.images || [];
-            const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+            const { deleteImage } = require('../config/cloudinary');
             
             // Parser imagesToDelete si c'est une string JSON
             let imagesToDeleteArray = [];
@@ -282,31 +282,27 @@ const establishmentsController = {
                 }
             }
             
-            // Supprimer les images spécifiées
+            // Supprimer les images spécifiées de Cloudinary
             if (imagesToDeleteArray && Array.isArray(imagesToDeleteArray) && imagesToDeleteArray.length > 0) {
-                imagesToDeleteArray.forEach(imageUrl => {
-                    // Extraire le nom du fichier depuis l'URL
-                    const filename = imageUrl.split('/').pop();
-                    const filePath = path.join(__dirname, '../../uploads/establishments', filename);
-                    
-                    // Supprimer le fichier du serveur
-                    if (fs.existsSync(filePath)) {
+                for (const imageUrl of imagesToDeleteArray) {
+                    // Supprimer de Cloudinary si c'est une URL Cloudinary
+                    if (imageUrl.includes('cloudinary.com')) {
                         try {
-                            fs.unlinkSync(filePath);
-                            console.log(`Image supprimée: ${filename}`);
+                            await deleteImage(imageUrl);
+                            console.log(`Image Cloudinary supprimée: ${imageUrl}`);
                         } catch (error) {
-                            console.error(`Erreur lors de la suppression de l'image ${filename}:`, error);
+                            console.error(`Erreur lors de la suppression de l'image Cloudinary:`, error);
                         }
                     }
                     
                     // Retirer l'URL de la liste
                     imageUrls = imageUrls.filter(url => url !== imageUrl);
-                });
+                }
             }
             
-            // Si de nouveaux fichiers ont été uploadés
+            // Si de nouveaux fichiers ont été uploadés (Cloudinary)
             if (req.files && req.files.length > 0) {
-                const newImages = req.files.map(file => `${baseUrl}/uploads/establishments/${file.filename}`);
+                const newImages = req.files.map(file => file.path);
                 // Ajouter les nouvelles images aux images existantes
                 imageUrls = [...imageUrls, ...newImages];
             }

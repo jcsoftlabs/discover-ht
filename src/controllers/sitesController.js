@@ -100,9 +100,10 @@ const sitesController = {
             // Gérer les images uploadées
             let imageUrls = [];
             
-            // Si des fichiers ont été uploadés via multer
+            // Si des fichiers ont été uploadés via multer (Cloudinary)
             if (req.files && req.files.length > 0) {
-                imageUrls = req.files.map(file => `/uploads/sites/${file.filename}`);
+                // Cloudinary retourne directement les URLs dans file.path
+                imageUrls = req.files.map(file => file.path);
             }
             // Si des URLs d'images sont fournies dans le body
             else if (images) {
@@ -179,9 +180,9 @@ const sitesController = {
             // Gérer les images uploadées
             let imageUrls = existingSite.images || [];
             
-            // Si de nouveaux fichiers ont été uploadés
+            // Si de nouveaux fichiers ont été uploadés (Cloudinary)
             if (req.files && req.files.length > 0) {
-                const newImages = req.files.map(file => `/uploads/sites/${file.filename}`);
+                const newImages = req.files.map(file => file.path);
                 // Ajouter les nouvelles images aux images existantes
                 imageUrls = [...imageUrls, ...newImages];
             }
