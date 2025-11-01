@@ -24,7 +24,14 @@ SMTP_SECURE=true
 SMTP_USER=noreply@discoverhaiti.ht
 SMTP_PASS=Shalom4910!
 SMTP_FROM="Discover Haiti" <noreply@discoverhaiti.ht>
+
+# Cloudinary Configuration (requis pour les images)
+CLOUDINARY_CLOUD_NAME=votre_cloud_name
+CLOUDINARY_API_KEY=votre_api_key
+CLOUDINARY_API_SECRET=votre_api_secret
 ```
+
+⚠️ **Important** : Les variables Cloudinary sont **obligatoires** pour l'upload d'images des établissements et sites touristiques. Sans ces variables, les uploads échoueront.
 
 ## Déploiement de la base de données
 
