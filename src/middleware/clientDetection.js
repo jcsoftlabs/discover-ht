@@ -44,13 +44,25 @@ const formatImagesForClient = (req, images) => {
     if (!images) return images;
     
     if (req.clientInfo?.isMobile) {
-        // Mobile : utiliser des versions compressées/thumbnails si disponibles
+        // Mobile : utiliser des transformations Cloudinary pour des images optimisées
+        const optimizeCloudinaryUrl = (url) => {
+            if (typeof url === 'string' && url.includes('cloudinary.com')) {
+                // Insérer les transformations Cloudinary pour mobile
+                // Format: https://res.cloudinary.com/[cloud]/image/upload/[transformations]/[path]
+                return url.replace(
+                    '/upload/',
+                    '/upload/w_600,h_400,c_limit,q_auto:good,f_auto/'
+                );
+            }
+            return url;
+        };
+        
         return Array.isArray(images) 
-            ? images.map(img => typeof img === 'string' ? img.replace(/\.(jpg|jpeg|png)$/i, '_thumb.$1') : img)
-            : images;
+            ? images.map(optimizeCloudinaryUrl)
+            : optimizeCloudinaryUrl(images);
     }
     
-    // Web : images haute qualité
+    // Web : images haute qualité (utiliser les URLs originales)
     return images;
 };
 
